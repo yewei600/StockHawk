@@ -1,6 +1,7 @@
 package com.udacity.stockhawk.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -47,6 +48,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public void onClick(String symbol) {
         Timber.d("Symbol clicked: %s", symbol);
+        Toast.makeText(this, "DUDE, I found it!!! the click listener. ITEM= " + symbol, Toast.LENGTH_LONG).show();
+        Intent intent = new Intent(this, StockDetailActivity.class);
+        intent.putExtra("stock_name", symbol);
+        startActivity(intent);
     }
 
     @Override
@@ -81,7 +86,21 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         }).attachToRecyclerView(stockRecyclerView);
 
-
+        //check for no network state
+        if (!networkUp() && adapter.getItemCount() == 0) {
+            swipeRefreshLayout.setRefreshing(false);
+            error.setText(getString(R.string.error_no_network));
+            error.setVisibility(View.VISIBLE);
+        } else if (!networkUp()) {
+            swipeRefreshLayout.setRefreshing(false);
+            Toast.makeText(this, R.string.toast_no_connectivity, Toast.LENGTH_LONG).show();
+        } else if (PrefUtils.getStocks(this).size() == 0) {
+            swipeRefreshLayout.setRefreshing(false);
+            error.setText(getString(R.string.error_no_stocks));
+            error.setVisibility(View.VISIBLE);
+        } else {
+            error.setVisibility(View.GONE);
+        }
     }
 
     private boolean networkUp() {
