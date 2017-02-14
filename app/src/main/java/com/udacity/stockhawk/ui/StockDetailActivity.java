@@ -3,6 +3,8 @@ package com.udacity.stockhawk.ui;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
@@ -18,8 +20,10 @@ import com.udacity.stockhawk.data.Contract;
 
 import java.util.ArrayList;
 
-public class StockDetailActivity extends AppCompatActivity {
+public class StockDetailActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = StockDetailActivity.class.getSimpleName();
+
+    //https://discussions.udacity.com/t/chart-will-not-display-lines/218157
 
     String stockSymbol;
     private LineChart mLineChart;
@@ -92,4 +96,18 @@ public class StockDetailActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
 }

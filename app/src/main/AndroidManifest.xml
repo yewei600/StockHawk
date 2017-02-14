@@ -40,12 +40,13 @@
 
         <activity android:name=".ui.StockDetailActivity"></activity>
 
+        <!--broadcast receiver for the widget provider-->
         <receiver
             android:name=".widget.StockWidgetProvider"
             android:label="@string/title_widget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <!--<action android:name=""/>-->
+                <action android:name="com.udacity.stockhawk.ACTION_DATA_UPDATED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
