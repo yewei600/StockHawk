@@ -9,6 +9,11 @@ import android.widget.RemoteViewsService;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
+import com.udacity.stockhawk.data.PrefUtils;
+
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * Created by ericwei on 2017-02-09.
@@ -76,12 +81,39 @@ public class StockWidgetRemoteViewsService extends RemoteViewsService {
 
                 String symbol = data.getString(data.getColumnIndex(STOCK_COLUMNS[0]));
                 String price = data.getString(data.getColumnIndex(STOCK_COLUMNS[1]));
-                String change = data.getString(data.getColumnIndex(STOCK_COLUMNS[2]));
+                float rawAbsoluteChange = data.getFloat(data.getColumnIndex(STOCK_COLUMNS[2]));
+                float percentageChange = data.getFloat(data.getColumnIndex(STOCK_COLUMNS[3]));
+
+                if (rawAbsoluteChange > 0) {
+                    views.setInt(R.id.change, "setBackgroundResource", R.drawable.percent_change_pill_green);
+                } else {
+                    views.setInt(R.id.change, "setBackgroundResource", R.drawable.percent_change_pill_red);
+                }
 
                 views.setTextViewText(R.id.symbol, symbol);
                 views.setTextViewText(R.id.price, price);
-                views.setTextViewText(R.id.change, change);
 
+                //Formatting the display of the stock change textview
+                DecimalFormat dollarFormatWithPlus = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
+                dollarFormatWithPlus.setPositivePrefix("+$");
+                DecimalFormat percentageFormat = (DecimalFormat) NumberFormat.getPercentInstance(Locale.getDefault());
+                percentageFormat.setMaximumFractionDigits(2);
+                percentageFormat.setMinimumFractionDigits(2);
+                percentageFormat.setPositivePrefix("+");
+
+                if (PrefUtils.getDisplayMode(getApplicationContext()).equals(
+                        getApplicationContext().getString(R.string.pref_display_mode_absolute_key))) {
+                    String change = dollarFormatWithPlus.format(rawAbsoluteChange);
+                    views.setTextViewText(R.id.change, change);
+                } else {
+                    String percentage = percentageFormat.format(percentageChange / 100);
+                    views.setTextViewText(R.id.change, percentage);
+                }
+
+                //set the click Intent
+                final Intent fillInIntent = new Intent();
+                fillInIntent.putExtra("stock_name", symbol);
+                views.setOnClickFillInIntent(R.id.widget_list_item, fillInIntent);
 
                 return views;
             }
@@ -98,9 +130,9 @@ public class StockWidgetRemoteViewsService extends RemoteViewsService {
 
             @Override
             public long getItemId(int position) {
-                if (data.moveToPosition(position)) {
-                    // return data.getLong();         /////////////////////////
-                }
+//                if (data.moveToPosition(position)) {
+//                    return data.getLong();
+//                }
                 return position;
             }
 

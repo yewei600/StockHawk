@@ -34,7 +34,7 @@ public class StockWidgetProvider extends AppWidgetProvider {
             //use remoteViewService
             setRemoteAdapter(context, views);
 
-            //on Click handling
+            //on Click handling of list
             Intent clickIntentTemplate = new Intent(context, StockDetailActivity.class);
             PendingIntent clickPendingIntentTemplate = TaskStackBuilder.create(context)
                     .addNextIntentWithParentStack(clickIntentTemplate)

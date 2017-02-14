@@ -8,6 +8,7 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -42,7 +43,8 @@ public class StockDetailActivity extends AppCompatActivity implements LoaderMana
         tv.setText(String.valueOf(stocksHistory.length));
 
 
-//
+        Toast.makeText(this, "symbol ==" + stockSymbol, Toast.LENGTH_SHORT).show();
+
 
     }
 
