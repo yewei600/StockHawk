@@ -11,11 +11,17 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.udacity.stockhawk.ui.StockDetailActivity">
 
+    <!--<com.github.mikephil.charting.charts.LineChart-->
+    <!--android:id="@+id/history_chart"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent" />-->
 
-    <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/history_chart"
+    <lecho.lib.hellocharts.view.LineChartView
+        android:id="@+id/stock_chart"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:visibility="invisible" />
 
     <ScrollView
         android:layout_width="match_parent"

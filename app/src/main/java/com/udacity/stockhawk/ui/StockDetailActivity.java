@@ -1,57 +1,73 @@
 package com.udacity.stockhawk.ui;
 
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
+import com.udacity.stockhawk.sync.QuoteIntentService;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
-public class StockDetailActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+import lecho.lib.hellocharts.model.Axis;
+import lecho.lib.hellocharts.model.AxisValue;
+import lecho.lib.hellocharts.model.Line;
+import lecho.lib.hellocharts.model.LineChartData;
+import lecho.lib.hellocharts.model.PointValue;
+import lecho.lib.hellocharts.view.LineChartView;
+
+public class StockDetailActivity extends AppCompatActivity {
     private static final String TAG = StockDetailActivity.class.getSimpleName();
 
     //https://discussions.udacity.com/t/chart-will-not-display-lines/218157
 
-    String stockSymbol;
-    private LineChart mLineChart;
+    private String mStockSymbol;
+    private ActionBar mActionbar;
+    //    private LineChart mLineChart;
+    private LineChartView mChart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stock_detail);
 
-        LineChart mLineChart = (LineChart) findViewById(R.id.history_chart);
+        mStockSymbol = getIntent().getStringExtra("stock_name");
+
+        mActionbar = getSupportActionBar();
+        mActionbar.setTitle("Stock: " + mStockSymbol);
+
+        mChart = (LineChartView) findViewById(R.id.stock_chart);
         TextView tv = (TextView) findViewById(R.id.historical_stock_data);
 
-        stockSymbol = getIntent().getStringExtra("stock_name");
-
-        String[] stocksHistory = getStockValueOverTime().split("\n");   //"\\r?\\n"
-        tv.setText(String.valueOf(stocksHistory.length));
-
-
-        Toast.makeText(this, "symbol ==" + stockSymbol, Toast.LENGTH_SHORT).show();
-
-
+        String stocksHistory = getStockValueOverTime();
+        updateChart(stocksHistory);
     }
+
 
     private String getStockValueOverTime() {
         Cursor cursor = getContentResolver().query(Contract.Quote.URI,
                 new String[]{Contract.Quote.COLUMN_HISTORY},
-                Contract.Quote.COLUMN_SYMBOL + "='" + stockSymbol + "'",
+                Contract.Quote.COLUMN_SYMBOL + "='" + mStockSymbol + "'",
                 null, null);
         cursor.moveToFirst();
 
@@ -62,54 +78,58 @@ public class StockDetailActivity extends AppCompatActivity implements LoaderMana
         return null;
     }
 
-    //https://discussions.udacity.com/t/how-to-scale-mpandroid-y-axis/187343/11
-    private void updateChart(String[] stocksHistory) {
-        ArrayList<Entry> entries = new ArrayList<Entry>();
-        ArrayList<String> labels = new ArrayList<String>();
-        String[] oneEntry = null;
+    private void updateChart(String stockData) {
+        List<AxisValue> axisValuesX = new ArrayList<>();
+        List<PointValue> pointValues = new ArrayList<>();
+        String[] stocksHistory = stockData.split("\n");
+        int numOfStockEntries = stocksHistory.length;
 
-        for (int i = 0; i < stocksHistory.length; i++) {
-            oneEntry = stocksHistory[i].split(",");
-            entries.add(new Entry(Float.parseFloat(oneEntry[1]), i));
-            labels.add(oneEntry[0]);
+        Date[] stockDates = new Date[numOfStockEntries];
+        String[] stockPrices = new String[numOfStockEntries];
+
+        for (int i = 0; i < numOfStockEntries; i++) {
+            String[] parts = stocksHistory[i].split(",");
+            String date = parts[0];
+            stockDates[i] = new Date(Long.parseLong(date));
+            stockPrices[i] = parts[1];
         }
 
-        XAxis xAxis = mLineChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextSize(10f);
-        YAxis left = mLineChart.getAxisLeft();
-        left.setEnabled(true);
-        left.setLabelCount(5, true);  //????
-        xAxis.setTextColor(Color.WHITE);
-        left.setTextColor(Color.WHITE);
+        for (int i = 0; i < stocksHistory.length; i++) {
+            int x = stocksHistory.length - 1 - i;
+            String stockPrice = stockPrices[i];
+            String stockDate = String.format(String.format("%tc"), stockDates[i]);
 
-        mLineChart.getAxisRight().setEnabled(false);
-        LineDataSet dataSet = new LineDataSet(entries, "Stock Labels");
-        dataSet.setColor(Color.RED);
-        dataSet.setValueTextColor(Color.BLACK);
+//            PointValue pointValue = new PointValue(x, Float.valueOf(stockPrices[i]));
+//            pointValue.setLabel(String.format(String.format("%tF"), stockDates[i]));
+        }
+        //prepare data for chart
+        Line line = new Line(pointValues).setColor(Color.WHITE).setCubic(false);
+        List<Line> lines = new ArrayList<>();
+        lines.add(line);
+        LineChartData lineChartData = new LineChartData();
+        lineChartData.setLines(lines);
 
+        // Init x-axis
+        Axis axisX = new Axis(axisValuesX);
+        axisX.setHasLines(true);
+        axisX.setMaxLabelChars(4);
+        lineChartData.setAxisXBottom(axisX);
 
-        LineData lineData = new LineData(dataSet);
+        // Init y-axis
+        Axis axisY = new Axis();
+        axisY.setAutoGenerated(true);
+        axisY.setHasLines(true);
+        axisY.setMaxLabelChars(4);
+        lineChartData.setAxisYLeft(axisY);
 
-        mLineChart.setData(lineData);
-        mLineChart.animateX(1);
-        mLineChart.setBackgroundColor(Color.TRANSPARENT);
-        mLineChart.invalidate();
+        // Update chart with new data.
+        mChart.setInteractive(false);
+        mChart.setLineChartData(lineChartData);
 
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return null;
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+        // Show chart
+        mChart.setVisibility(View.VISIBLE);
 
     }
+
+
 }

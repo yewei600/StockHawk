@@ -44,7 +44,7 @@ public final class QuoteSyncJob {
     private QuoteSyncJob() {
     }
 
-    static void getQuotes(Context context) {
+    static boolean getQuotes(Context context) {
 
         Timber.d("Running sync job");
 
@@ -62,7 +62,7 @@ public final class QuoteSyncJob {
             Timber.d(stockCopy.toString());
 
             if (stockArray.length == 0) {
-                return;
+                return false;
             }
 
             Map<String, Stock> quotes = YahooFinance.get(stockArray);
@@ -116,6 +116,7 @@ public final class QuoteSyncJob {
                 } catch (Exception e) {
                     Log.d(TAG, "couldn't get stock for symbol=" + symbol);
                     Toast.makeText(context, "No stock exists for " + symbol, Toast.LENGTH_LONG).show();
+                    return false;
                 }
             }
             context.getContentResolver()
@@ -129,7 +130,9 @@ public final class QuoteSyncJob {
 
         } catch (IOException exception) {
             Timber.e(exception, "Error fetching stock quotes");
+            return false;
         }
+        return true;
     }
 
     private static void schedulePeriodic(Context context) {
